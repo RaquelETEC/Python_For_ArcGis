@@ -1,0 +1,72 @@
+import arcpy
+import json
+import sys 
+import locale
+
+class scriptFindPlusCode(): 
+
+    def inicializar(self):
+        txtwhere = str(arcpy.GetParameterAsText(0))
+        # txtstatus = int(arcpy.GetParameterAsText(1))
+        # camada_origem = arcpy.GetParameter(2)
+        # camada_destino = arcpy.GetParameter(3)
+
+        #txtwhere = "asdf__"
+        txtstatus = '3'
+        camada_origem = r'C:\Users\MURALIS 0023\Desktop\Trabalho\Desafios\0001\ForestGIS_Geodatabase.gdb\BRA_MUNICIPIOS_BRASIL'
+        camada_destino =  r'C:\Users\MURALIS 0023\Desktop\Trabalho\Desafios\0004\DESAFIO004\DESAFIO004.gdb\Mun_Brasileiros'
+
+        lst = [] 
+        fields = ["COD_IBGE", "NOME_MUNI", "SHAPE@"]
+        
+        verifica_uf = 0
+
+        # Ctrl + K + C >> comenta bloco
+        # Ctrl + K + U >> decomenta bloco
+
+
+        # string = "abc 123"
+        # arcpy.AddMessage((string, "is alphanumeric?", string.isalnum()))
+        # string = "abc_123"
+        # arcpy.AddMessage((string, "is alphanumeric?", string.isalnum()))
+        # string = 123
+        # arcpy.AddMessage((string, "is alphanumeric?", string.isalnum()))
+        # string = "aaaa"
+        # arcpy.AddMessage((string, "is alphanumeric?", string.isalnum()))
+
+        arcpy.AddMessage(txtwhere)
+
+        if not txtwhere.isnumeric():
+            verifica_uf = 1
+            arcpy.AddMessage("UF inválida.")
+            #pass
+        else:
+            with arcpy.da.SearchCursor(camada_origem, ["UF"], where_clause = " UF = '" + txtwhere + "'") as cursor:
+                if cursor.next():
+                    pass 
+                else:
+                    verifica_uf = 1
+                    arcpy.AddMessage("UF não encontrada")
+            
+        if verifica_uf == 0:
+            
+            expression = "UF = '" + txtwhere + "'"
+
+            with arcpy.da.SearchCursor(camada_origem, fields, where_clause = expression) as cursor:
+                for row in cursor:
+                    lst.append((row[2], row[0], row[1], txtstatus))
+                    arcpy.AddMessage(lst)
+
+            if len(lst) == 0:
+                arcpy.AddMessage("Nenhum resultado encontrado.") 
+            else:
+                with arcpy.da.InsertCursor(camada_destino, ["SHAPE@", "ID", "DESCRICAO", "STATUS"]) as cursor:
+                    for valor in lst:
+                        cursor.insertRow(valor)
+                arcpy.AddMessage("Valores inseridos com sucesso na camada de destino.")
+        else:
+            arcpy.AddMessage("Não inserido.")
+
+if __name__ == '__main__':
+    main = scriptFindPlusCode()
+    main.inicializar()
